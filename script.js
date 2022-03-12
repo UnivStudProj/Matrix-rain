@@ -6,72 +6,39 @@ const katakana2 = 'ズブヅプエェケセテネヘメレヱゲゼデベペオ�
 const digits = '0123456789';
 const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+const w = canvas.width = window.innerWidth;
+const h = canvas.height = window.innerHeight;
 
-class Sybmol {
-    constructor(x, y, fontSize, canvasHeight) {
-        this.chars = `${katakana1 + katakana2 + digits + latin}`;
-        this.x = x;
-        this.y = y;
-        this.fontSize = fontSize;
-        this.text = '';
-        this.canvasHeight = canvasHeight;
+let chars = `${katakana1 + katakana2 + digits + latin}`;
+let fontSize = 25;
+let gradient = ctx.createLinearGradient(0, 0, 0, h);
+
+for (let i = 0; i < palette.length; i++) {
+    gradient.addColorStop(i / palette.length, palette[i]);
+}
+// TODO: hsla
+// ctx.fillStyle = '#0aff0a';
+ctx.fillStyle = gradient;
+ctx.font = `${fontSize}px monospace`;
+
+function buildText() {
+    const minLength = 5;
+    const maxLength = 40;
+    var txt = [];
+    let txtLength = Math.floor(Math.random() * (maxLength - minLength + 1)) + minLength;
+    for (let i = 0; i <= txtLength; i++) {
+        let index = Math.floor(Math.random() * chars.length);
+        txt[i] = chars.charAt(index);
     }
 
-    draw(context) {
-        let index = Math.floor(Math.random() * this.chars.length);
-        this.text = this.chars.charAt(index);
-
-        context.fillText(this.text, this.x * this.fontSize, this.y * this.fontSize);
-        if (this.y * this.fontSize > this.canvasHeight && Math.random() > 0.98) {
-            this.y = 0;
-        } else {
-            this.y++;
-        }
-    }
+    return txt;
 }
 
-class Effect {
-    constructor(canvasWidth, canvasHeight) {
-        this.canvasWidth = canvasWidth;
-        this.canvasHeight = canvasHeight;
-        this.fontSize = 25;
-        this.columns = this.canvasWidth / this.fontSize;
-        this.symbols = [];
-        this.#initialize();
-    }
-
-    #initialize() {
-        for (let i = 0; i < this.columns; i++) {
-            this.symbols[i] = new Sybmol(i, 0, this.fontSize, this.canvasHeight);
-        }
+for (let i = 0; i < 5; i++) {
+    let text = buildText();
+    let x = i * fontSize;
+    for (let j = 0; j < text.length; j++) {
+        let y = (1 + j) * fontSize;
+        ctx.fillText(text[j], x, y + j);
     }
 }
-
-const effect = new Effect(canvas.width, canvas.height);
-
-const fps = 75;
-const nextFrame = 1000 / fps;
-
-let lastTime = 0;
-let timer = 0;
-
-function animate(timeStamp) {
-    const deltaTime = timeStamp - lastTime;
-    lastTime = timeStamp;
-    if (timer > nextFrame) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-        ctx.textAlign = 'center';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#0aff0a';
-        ctx.font = effect.fontSize + 'px monospace';
-        effect.symbols.forEach(symbol => symbol.draw(ctx));
-        timer = 0;
-    } else {
-        timer += deltaTime;
-    }
-
-    requestAnimationFrame(animate);
-}
-animate(0);
