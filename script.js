@@ -15,7 +15,7 @@ function getRandomBetween(min, max) {
 }
 
 function buildText() {
-    var txt = [];
+    let txt = [];
     let txtLength = getRandomBetween(5, 20);
     for (let i = 0; i <= txtLength; i++) {
         let index = Math.floor(Math.random() * chars.length);
@@ -29,42 +29,77 @@ function buildText() {
 class TextLine {
     constructor(x, y, fontSize, text) {
         this.x = x;
-        this.y = y * fontSize;
+        this.y = y;
         this.fontSize = fontSize;
-        this.text = text
+        this.text = text;
+        this.#initialize();
     }
 
-    drawText(context) {
-        let blur = this.fontSize < 10 ? this.fontSize * 0.2 : 0;
-        let gradient = context.createLinearGradient(this.x, this.y, this.x + this.fontSize, (this.text.length + this.y) * this.fontSize);
+    #initialize() {
+        let blur = this.fontSize <= 5 ? this.fontSize * 0.4 : 0;
+        let gradient = ctx.createLinearGradient(this.x, this.y, this.x * this.fontSize, this.y * this.fontSize);
         let gradientSteps = 2;
 
         for (let i = 0; i <= gradientSteps; i++) {
             gradient.addColorStop(i / gradientSteps, `hsl(112, 100%, ${50 + (i * 10.25)}%)`);
         }
 
-        context.fillStyle = gradient;
-        context.font = `${this.fontSize}px monospace`;
-        context.textAlign = 'center';
-        context.filter = `
+        ctx.fillStyle = gradient;
+        ctx.font = `${this.fontSize}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.filter = `
             blur(${blur}px)
             drop-shadow(0px 0px 10px hsl(112, 100%, 50%))`;
+    }
 
+    drawLine() {
+        ctx.clearRect(0, 0, w, h);
         // Vertical word
         for (let i = 0; i < this.text.length; i++) {
-            context.fillText(this.text[i], this.x, (1 + i) * this.fontSize);
+            ctx.fillText(this.text[i], this.x, (1 + i) * this.fontSize);
+        }
+    }
+
+    moveLine(imgCache, index) {
+        if (this.y == h) {
+            lines.splice(index, 1);
+            cache.splice(index, 1);
+        } else {
+            this.y++;
         }
 
-        context.filter = 'blur(0px)';
+        ctx.drawImage(imgCache, 0, this.y);
     }
 }
 
-// Columns
-for (let j = 0; j < 10; j++) {
+var lines = [];
+var cache = [];
+
+function createSymbols() {
+    // Columns
     let x = getRandomBetween(1, w);
-    let fontSize = getRandomBetween(5, 20);
+    let fontSize = getRandomBetween(3, 20);
 
     let text = buildText();
-    let line = new TextLine(x, 0, fontSize, text);
-    line.drawText(ctx);
+    var line = new TextLine(x, -40, fontSize, text);
+    line.drawLine();
+    lines.push(line);
+
+    let img = new Image();
+    img.src = canvas.toDataURL('image/png', 1);
+    cache.push(img);
 }
+
+function move() {
+    // Moving text lines
+    ctx.clearRect(0, 0, w, h);
+    for (let l = 0; l < lines.length; l++) {
+        lines[l].moveLine(cache[l], l);
+    }
+    if (lines.length < 20) { createSymbols(); }
+
+    requestAnimationFrame(move);
+}
+
+createSymbols();
+move();
