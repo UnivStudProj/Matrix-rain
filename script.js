@@ -1,5 +1,4 @@
-const canvas = document.getElementById('canvas1');
-const ctx = canvas.getContext('2d');
+const frame = document.querySelector('.frame');
 
 const katakana1 = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグ';
 const katakana2 = 'ズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
@@ -7,99 +6,54 @@ const digits = '0123456789';
 const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const chars = `${katakana1 + katakana2 + digits + latin}`;
 
-const w = canvas.width = window.innerWidth;
-const h = canvas.height = window.innerHeight;
-
-function getRandomBetween(min, max) {
+function randomBetween(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function buildText() {
-    let txt = [];
-    let txtLength = getRandomBetween(5, 20);
-    for (let i = 0; i <= txtLength; i++) {
-        let index = Math.floor(Math.random() * chars.length);
-        txt[i] = chars.charAt(index);
-    }
-
-    return txt;
-}
-
-
-class TextLine {
-    constructor(x, y, fontSize, text) {
-        this.x = x;
-        this.y = y;
+class Symbols {
+    constructor(frame, fontSize) {
+        this.frame = frame;
         this.fontSize = fontSize;
-        this.text = text;
-        this.#initialize();
+        this.p = document.createElement('p');
+        this.p.innerHTML = '';
+        this.isInserted = false;
+        this.#setStyle();
     }
 
-    #initialize() {
-        let blur = this.fontSize <= 5 ? this.fontSize * 0.4 : 0;
-        let gradient = ctx.createLinearGradient(this.x, this.y, this.x * this.fontSize, this.y * this.fontSize);
-        let gradientSteps = 2;
-
-        for (let i = 0; i <= gradientSteps; i++) {
-            gradient.addColorStop(i / gradientSteps, `hsl(112, 100%, ${50 + (i * 10.25)}%)`);
-        }
-
-        ctx.fillStyle = gradient;
-        ctx.font = `${this.fontSize}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.filter = `
-            blur(${blur}px)
-            drop-shadow(0px 0px 10px hsl(112, 100%, 50%))`;
+    addSymbol() {
+        this.p.innerHTML += chars.charAt(randomBetween(0, chars.length));
+        if (!this.isInserted) { this.#insertParagraph() };
     }
 
-    drawLine() {
-        ctx.clearRect(0, 0, w, h);
-        // Vertical word
-        for (let i = 0; i < this.text.length; i++) {
-            ctx.fillText(this.text[i], this.x, (1 + i) * this.fontSize);
-        }
+    #insertParagraph() {
+        this.frame.appendChild(this.p);
+        this.isInserted = true;
     }
 
-    moveLine(imgCache, index) {
-        if (this.y == h) {
-            lines.splice(index, 1);
-            cache.splice(index, 1);
-        } else {
-            this.y++;
-        }
-
-        ctx.drawImage(imgCache, 0, this.y);
+    #setStyle() {
+        if (this.fontSize <= 7) { this.p.style.filter = 'blur(2px)'; }
+        this.p.style.fontSize = `${this.fontSize}px`;
+        this.p.style.textShadow = `0px 0px 20px #0aff0a`;
     }
 }
 
-var lines = [];
-var cache = [];
+var symbolsArr = [];
 
-function createSymbols() {
-    // Columns
-    let x = getRandomBetween(1, w);
-    let fontSize = getRandomBetween(3, 20);
+function main() {
+    for (let i = 0; i < 120; i++) {
+        let fontSize = randomBetween(5, 20);
+        let symbol = new Symbols(frame, fontSize);
+        let symbolsNum = randomBetween(4, 20);
 
-    let text = buildText();
-    var line = new TextLine(x, -40, fontSize, text);
-    line.drawLine();
-    lines.push(line);
-
-    let img = new Image();
-    img.src = canvas.toDataURL('image/png', 1);
-    cache.push(img);
-}
-
-function move() {
-    // Moving text lines
-    ctx.clearRect(0, 0, w, h);
-    for (let l = 0; l < lines.length; l++) {
-        lines[l].moveLine(cache[l], l);
+        for (let l = 0; l <= symbolsNum; l++) {
+            symbol.addSymbol();
+        }
+        symbolsArr.push(symbol);
+        
     }
-    if (lines.length < 20) { createSymbols(); }
-
-    requestAnimationFrame(move);
+    let st = window.getComputedStyle(symbolsArr[0].p);
+    let m = new WebKitCSSMatrix(st.transform);
+    console.log(m.m5);
 }
 
-createSymbols();
-move();
+main();

@@ -7,10 +7,24 @@
 body {
     overflow: hidden;
     background: black;
+    writing-mode: vertical-lr;
+    text-orientation: upright;
 }
 
-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
+p:nth-child(2n-1) {
+    color: #0aff0a;
+    animation: move;
+    animation-duration: 3s;
+    animation-fill-mode: forwards;
+}
+
+@keyframes move {
+    0% {
+        transform: translateY(-500px);
+    }
+
+    100% {
+        transform: translateY(800px);
+    }
+    
 }
