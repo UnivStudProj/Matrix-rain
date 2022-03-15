@@ -4,8 +4,12 @@ const ctx = canvas.getContext('2d');
 const katakana1 = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグ';
 const katakana2 = 'ズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
 const digits = '0123456789';
-const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-const chars = `${katakana1 + katakana2 + digits + latin}`;
+const latinU = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const latinL = 'abcdefghijklmnopqrstuvwxyz';
+const extra_symbols = '!#$%&()*+/[\\]^{|}'
+
+const chars1 = `${katakana1 + katakana2 + digits + latinU}`;
+const chars2 = `${latinL + extra_symbols}`;
 
 const w = canvas.width = window.innerWidth;
 const h = canvas.height = window.innerHeight;
@@ -15,28 +19,40 @@ function randBetween(min, max) {
 }
 
 class Sybmol {
-    constructor(x, y, fontSize) {
+    constructor(x, y, fontSize, isGray) {
         this.x = x;
         this.y = y;
         this.fontSize = fontSize;
         this.text = '';
+        this.isGray = isGray;
     }
 
-    draw(context) {
-        let index = Math.floor(Math.random() * chars.length);
-        this.text = chars.charAt(index);
+    draw() {
+        if (!this.isGray) {
+            let index = Math.floor(Math.random() * chars1.length);
+            this.text = chars1.charAt(index);
 
-        context.font = `${this.fontSize}px monospace`;
-        context.filter = `
-            blur(${this.fontSize < 9 ? this.fontSize * 0.4 : 0}px)
-            drop-shadow(0px 0px 10px #0aff0a)`;
+            ctx.font = `${this.fontSize}px monospace`;
+            ctx.filter = `
+                blur(${this.fontSize < 11 ? this.fontSize * 0.4 : 0}px)
+                drop-shadow(0px 0px 10px #0aff0a)`;
+            ctx.fillStyle = '#0aff0a';
 
-        context.fillText(this.text, this.x, this.y * this.fontSize);
+        } else {
+            let index = Math.floor(Math.random() * chars2.length);
+            this.text = chars2.charAt(index);
+
+            ctx.font = '10px monospace';
+            ctx.filter = 'none';
+            ctx.fillStyle = 'hsl(0 0% 33%)';
+        }
+
+        ctx.fillText(this.text, this.x, this.y * this.fontSize);
 
         if (this.y * this.fontSize > h) {
             this.x = randBetween(0, w);
             this.y = randBetween(-10, 0);
-            this.fontSize = randBetween(minFontSize, maxFontSize);
+            this.fontSize = !this.isGray ? randBetween(minFontSize, maxFontSize) : this.fontSize;
         } else {
             this.y++;
         }
@@ -44,9 +60,10 @@ class Sybmol {
 }
 
 class Effect {
-    constructor(amount) {
+    constructor(amount, isGray=false) {
         this.amount = amount;
         this.symbols = [];
+        this.isGray = isGray;
         this.#initialize();
     }
 
@@ -54,16 +71,18 @@ class Effect {
         for (let i = 0; i < this.amount; i++) {
             let x = randBetween(0, w);
             let y = randBetween(-100, 0);
-            let fontSize = randBetween(minFontSize, maxFontSize);
-            this.symbols[i] = new Sybmol(x, y, fontSize);
+            let fontSize = !this.isGray ? randBetween(minFontSize, maxFontSize) : 10;
+            this.symbols[i] = new Sybmol(x, y, fontSize, this.isGray);
         }
+
     }
 }
 
-const minFontSize = 4;
-const maxFontSize = 15;
+const minFontSize = 8;
+const maxFontSize = 25;
 const amount = randBetween(50, 90);
 const effect = new Effect(amount);
+const grayEffect = new Effect(amount, true);
 
 function animate() {
     ctx.filter = 'none';
@@ -71,9 +90,8 @@ function animate() {
     ctx.textAlign = 'center';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillStyle = '#0aff0a';
-    ctx.filter = ``;
-    effect.symbols.forEach(symbol => symbol.draw(ctx));
+    effect.symbols.forEach(symbol => symbol.draw());
+    grayEffect.symbols.forEach(symbol => symbol.draw(ctx));
 
     requestAnimationFrame(animate);
 }
